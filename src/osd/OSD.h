@@ -141,6 +141,9 @@ enum {
   l_osd_agent_flush,
   l_osd_agent_evict,
 
+  l_osd_object_ctx_cache_hit,
+  l_osd_object_ctx_cache_total,
+
   l_osd_last,
 };
 
@@ -1490,9 +1493,13 @@ private:
       void dump(Formatter *f) {
         for(uint32_t i = 0; i < num_shards; i++) {
           ShardData* sdata = shard_list[i];
+	  char lock_name[32] = {0};
+          snprintf(lock_name, sizeof(lock_name), "%s%d", "OSD:ShardedOpWQ:", i);
           assert (NULL != sdata);
           sdata->sdata_op_ordering_lock.Lock();
-          sdata->pqueue.dump(f);
+	  f->open_object_section(lock_name);
+	  sdata->pqueue.dump(f);
+	  f->close_section();
           sdata->sdata_op_ordering_lock.Unlock();
         }
       }
